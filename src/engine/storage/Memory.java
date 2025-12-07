@@ -143,8 +143,8 @@ public class Memory implements Addressable {
 	public void clear() {
 		instructionAccesses = 0;
 		dataAccesses = 0;
-		memory = new TreeMap<Integer, Byte>();
-		instructions = new ArrayList<Instruction>();
+		memory = new TreeMap<>();
+		instructions = new ArrayList<>();
 	}
 	
 	public int getDataAccesses() {

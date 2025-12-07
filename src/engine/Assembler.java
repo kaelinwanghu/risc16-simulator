@@ -383,26 +383,26 @@ public final class Assembler
 		{
 			case "nop":
 			{
-				// nop → add r0, r0, r0
+				// nop -> add r0, r0, r0
 				parseInstruction("add", new String[]{"r0", "r0", "r0"}, processor);
 				break;
 			}
 			case "halt":
 			{
-				// halt → jalr r0, r0
+				// halt -> jalr r0, r0
 				parseInstruction("jalr", new String[]{"r0", "r0"}, processor);
 				break;
 			}
 			case "lli":
 			{
-				// lli rA, imm → addi rA, rA, (imm & 0x3f)
+				// lli rA, imm -> addi rA, rA, (imm & 0x3f)
 				int immediate = parseInteger(operands[1]) & 0x3f;
 				parseInstruction("addi", new String[]{operands[0], operands[0], String.valueOf(immediate)}, processor);
 				break;
 			}
 			case "movi":
 			{
-				// movi rA, imm → lui rA, (imm >> 6) + addi rA, rA, (imm & 0x3f)
+				// movi rA, imm -> lui rA, (imm >> 6) + addi rA, rA, (imm & 0x3f)
 				int immediate = parseInteger(operands[1]);
 				
 				if (immediate < 0 || immediate > 0xFFFF)

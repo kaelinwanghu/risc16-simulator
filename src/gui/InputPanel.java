@@ -58,10 +58,15 @@ public class InputPanel extends JPanel{
 	public String getProgram() {
 		return program.getText();
 	}
+
+	public void setProgram(String text)
+	{
+		program.setText(text);
+		program.setCaretPosition(0);
+	}
 	
 	public void clear() {
 		program.setText("");
 		program.setCaretPosition(0);
 	}
-	
 }
