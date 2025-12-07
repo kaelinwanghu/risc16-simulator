@@ -70,7 +70,6 @@ public class FileManager
 			Path path = file.toPath();
 			String content = Files.readString(path);
 			currentFile = file;
-			updateTitle();
 			return content;
 		}
 		catch (IOException e)
@@ -118,7 +117,6 @@ public class FileManager
 			if (success)
 			{
 				currentFile = file;
-				updateTitle();
 			}
 			return success;
 		}
@@ -147,33 +145,40 @@ public class FileManager
 	}
 	
 	/**
-	 * Saves to a temporary auto-save file
+	 * Saves to current file if it exists, otherwise to the autosave
 	 * @param content The content to auto-save
 	 */
-	public void autoSave(String content)
-	{
-		if (content == null || content.trim().isEmpty())
-		{
-			return; // Don't auto-save empty content
-		}
-		
-		try
-		{
-			// Create auto-save directory in user's home
-			Path autoSaveDir = Paths.get(System.getProperty("user.home"), ".risc16-simulator");
-			Files.createDirectories(autoSaveDir);
-			
-			// Auto-save file
-			File autoSaveFile = autoSaveDir.resolve("autosave.as16").toFile();
-			writeToFile(autoSaveFile, content);
-		}
-		catch (IOException e)
-		{
-			// Silent fail for auto-save - don't interrupt user
-			System.err.println("Auto-save failed: " + e.getMessage());
-		}
-	}
-	
+public void autoSave(String content)
+{
+    if (content == null || content.trim().isEmpty())
+    {
+        return; // Don't auto-save empty content
+    }
+    
+    // If working on a named file, save to that file
+    if (currentFile != null)
+    {
+        writeToFile(currentFile, content);
+        return;
+    }
+    
+    // Otherwise, save to auto-save location
+    try
+    {
+        // Create auto-save directory in user's home
+        Path autoSaveDir = Paths.get(System.getProperty("user.home"), ".risc16-simulator");
+        Files.createDirectories(autoSaveDir);
+        
+        // Auto-save file
+        File autoSaveFile = autoSaveDir.resolve("autosave.as16").toFile();
+        writeToFile(autoSaveFile, content);
+    }
+    catch (IOException e)
+    {
+        // Silent fail for auto-save - don't interrupt user
+        System.err.println("Auto-save failed: " + e.getMessage());
+    }
+}	
 	/**
 	 * Attempts to recover from auto-save
 	 * @return The recovered content, or null if no auto-save exists
@@ -226,7 +231,6 @@ public class FileManager
 	public void newFile()
 	{
 		currentFile = null;
-		updateTitle();
 	}
 	
 	/**
@@ -247,15 +251,6 @@ public class FileManager
 			return "Untitled";
 		}
 		return currentFile.getName();
-	}
-	
-	/**
-	 * Updates the window title with the current filename
-	 */
-	private void updateTitle()
-	{
-		String title = "RiSC-16 Simulator - " + getCurrentFileName();
-		parent.setTitle(title);
 	}
 	
 	/**

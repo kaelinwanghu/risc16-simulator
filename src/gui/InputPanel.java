@@ -13,17 +13,41 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 
 @SuppressWarnings("serial")
 public class InputPanel extends JPanel{
 
 	private JTextArea program;
+	private Simulator simulator;
 	
 	public InputPanel(final Simulator simulator, int programRows, int columns) {
 		super(new BorderLayout());
+		this.simulator = simulator;
 		program = new JTextArea(programRows, columns);
 		program.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 5));
-						
+		program.getDocument().addDocumentListener(new DocumentListener()
+        {
+            @Override
+            public void insertUpdate(DocumentEvent e)
+            {
+                simulator.setModified(true);
+            }
+            
+            @Override
+            public void removeUpdate(DocumentEvent e)
+            {
+                simulator.setModified(true);
+            }
+            
+            @Override
+            public void changedUpdate(DocumentEvent e)
+            {
+                simulator.setModified(true);
+            }
+        });
+
 		JScrollPane scrollPane = new JScrollPane(program);
 		scrollPane.setWheelScrollingEnabled(true);
 		scrollPane.setBorder(new LineBorder(Color.GRAY, 1));

@@ -14,12 +14,14 @@ public class AutoSaver
 	private Timer timer;
 	private FileManager fileManager;
 	private InputPanel inputPanel;
+	private Simulator simulator;
 	private boolean enabled;
 	
-	public AutoSaver(FileManager fileManager, InputPanel inputPanel)
+	public AutoSaver(FileManager fileManager, InputPanel inputPanel, Simulator simulator)
 	{
 		this.fileManager = fileManager;
 		this.inputPanel = inputPanel;
+		this.simulator = simulator;
 		this.enabled = true;
 		
 		// 30 second timer
@@ -64,6 +66,7 @@ public class AutoSaver
 		{
 			String content = inputPanel.getProgram();
 			fileManager.autoSave(content);
+			simulator.setModified(false);
 			System.out.println("Auto-saved at " + new java.util.Date());
 		}
 		catch (Exception e)

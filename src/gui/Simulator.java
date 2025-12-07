@@ -49,6 +49,8 @@ public class Simulator extends JFrame {
 	private FileManager fileManager;
 	private AutoSaver autoSaver;
 	private RecentFiles recentFiles;
+	private boolean isModified = false;
+	private JMenu fileMenuRef;
 	
 	private JPanel main;
 	private JButton execute;
@@ -106,7 +108,7 @@ public class Simulator extends JFrame {
 		storageViewer = new StorageViewer(this);
 		storageViewer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		
-		autoSaver = new AutoSaver(fileManager, inputPanel);
+		autoSaver = new AutoSaver(fileManager, inputPanel, this);
 		autoSaver.start();
 		String recovered = fileManager.recoverAutoSave();
 		if (recovered != null)
@@ -239,8 +241,7 @@ public class Simulator extends JFrame {
 			@Override
 			public void windowClosing(WindowEvent e)
 			{
-				autoSaver.stop();
-				System.exit(0);
+        		handleExit();
 			}
 		});
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -316,31 +317,31 @@ public class Simulator extends JFrame {
 	
 	private void newFile()
 	{
-		// Confirm if there's unsaved work
-		int response = JOptionPane.showConfirmDialog(
-			this,
-			"Start a new file? Any unsaved changes will be lost.",
-			"New File",
-			JOptionPane.OK_CANCEL_OPTION,
-			JOptionPane.WARNING_MESSAGE
-		);
-		
-		if (response == JOptionPane.OK_OPTION)
+		if (isModified && !promptSaveIfNeeded())
 		{
-			inputPanel.clear();
-			fileManager.newFile();
-			edit(false);
+			return; // User cancelled
 		}
+		
+		inputPanel.clear();
+		fileManager.newFile();
+		setModified(false); // NEW
+		edit(false);
 	}
 
 	private void openFile()
 	{
+		if (isModified && !promptSaveIfNeeded())
+		{
+			return; // User cancelled
+		}
+
 		String content = fileManager.openFile();
 		if (content != null)
 		{
 			inputPanel.clear();
-			// Set the loaded content (you'll need to add this method to InputPanel)
+			// Set the loaded content
 			inputPanel.setProgram(content);
+			setModified(false);
 			edit(false);
 			
 			// Add to recent files
@@ -352,6 +353,34 @@ public class Simulator extends JFrame {
 		}
 	}
 
+	/**
+	 * Helper method to prompt save if file is modified
+	 * @return true if should continue, false if cancelled
+	 */
+	private boolean promptSaveIfNeeded()
+	{
+		String filename = fileManager.getCurrentFileName();
+		int response = JOptionPane.showConfirmDialog(
+			this,
+			"Do you want to save changes to '" + filename + "'?",
+			"Unsaved Changes",
+			JOptionPane.YES_NO_CANCEL_OPTION,
+			JOptionPane.WARNING_MESSAGE
+		);
+		
+		if (response == JOptionPane.YES_OPTION)
+		{
+			String content = inputPanel.getProgram();
+			return fileManager.save(content);
+		}
+		else if (response == JOptionPane.CANCEL_OPTION)
+		{
+			return false; // Don't continue
+		}
+		
+		return true; // Continue without saving
+	}
+
 	private void saveFile()
 	{
 		String content = inputPanel.getProgram();
@@ -359,6 +388,7 @@ public class Simulator extends JFrame {
 		
 		if (success)
 		{
+			setModified(false);
 			// Add to recent files
 			File currentFile = fileManager.getCurrentFile();
 			if (currentFile != null)
@@ -378,6 +408,7 @@ public class Simulator extends JFrame {
 		
 		if (success)
 		{
+			setModified(false);
 			// Add to recent files
 			File currentFile = fileManager.getCurrentFile();
 			if (currentFile != null)
@@ -414,6 +445,7 @@ public class Simulator extends JFrame {
 					{
 						inputPanel.clear();
 						inputPanel.setProgram(content);
+						setModified(false);
 						edit(false);
 						recentFiles.addFile(file);
 					}
@@ -427,5 +459,71 @@ public class Simulator extends JFrame {
 			clearItem.addActionListener(e -> recentFiles.clear());
 			recentMenu.add(clearItem);
 		}
+	}
+
+	public void setModified(boolean modified)
+	{
+		this.isModified = modified;
+		updateTitle();
+	}
+
+	/**
+	 * Gets the modified state
+	 */
+	public boolean isModified()
+	{
+		return isModified;
+	}
+
+	/**
+	 * Updates window title with filename and modified indicator
+	 */
+	private void updateTitle()
+	{
+		String filename = fileManager.getCurrentFileName();
+		String modified = isModified ? "*" : "";
+		setTitle("RiSC-16 Simulator - " + modified + filename);
+	}
+
+	/**
+	 * Handles application exit with save prompt if needed
+	 */
+	private void handleExit()
+	{
+		// If file is modified, prompt to save
+		if (isModified)
+		{
+			String filename = fileManager.getCurrentFileName();
+			int response = JOptionPane.showConfirmDialog(
+				this,
+				"Do you want to save changes to '" + filename + "'?",
+				"Unsaved Changes",
+				JOptionPane.YES_NO_CANCEL_OPTION,
+				JOptionPane.WARNING_MESSAGE
+			);
+			
+			if (response == JOptionPane.YES_OPTION)
+			{
+				// Save the file
+				String content = inputPanel.getProgram();
+				boolean success = fileManager.save(content);
+				
+				if (!success)
+				{
+					// Save failed or was cancelled - don't exit
+					return;
+				}
+			}
+			else if (response == JOptionPane.CANCEL_OPTION)
+			{
+				// User cancelled - don't exit
+				return;
+			}
+			// If NO, continue to exit without saving
+		}
+		
+		// Stop auto-saver and exit
+		autoSaver.stop();
+		System.exit(0);
 	}
 }
