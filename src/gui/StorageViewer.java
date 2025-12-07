@@ -51,7 +51,7 @@ public class StorageViewer extends JPanel {
 		scrollPane.getViewport().setOpaque(false);
 		scrollPane.setOpaque(false);
 		
-		type = new JComboBox<String>(new String[]{"Registers", "L1 Instruction Cache", "L1 Data Cache", "Memory (Words)", "Memory (Bytes)"});
+		type = new JComboBox<String>(new String[]{"Registers", "Memory"});
 		type.setFocusable(false);
 		type.addItemListener(new ItemListener() {
 			
@@ -119,31 +119,7 @@ public class StorageViewer extends JPanel {
 		int levels = type.getItemCount() - 4;
 		switch(type.getSelectedIndex()) {
 			case 0 : text = Simulator.processor.getRegisterFile().displayRegisters(isHex); break;
-			case 1 : text = Simulator.processor.getInstructionCache().displayData(); break;
-			case 2 : text = Simulator.processor.getDataCache(0).displayData(isHex); break;
-			case 3 : 
-				if (levels == 1)
-					text = Simulator.processor.getMemory().displayDataWords(isHex); 
-				else
-					text = Simulator.processor.getDataCache(1).displayData(isHex);
-				break;
-			case 4 : 
-				if (levels == 1)
-					text = Simulator.processor.getMemory().displayDataBytes(isHex);
-				else if (levels == 2)
-					text = Simulator.processor.getMemory().displayDataWords(isHex); 
-				else
-					text = Simulator.processor.getDataCache(2).displayData(isHex);
-				break;
-			case 5 : 
-				if (levels == 2)
-					text = Simulator.processor.getMemory().displayDataBytes(isHex);
-				else if (levels == 3)
-					text = Simulator.processor.getMemory().displayDataWords(isHex); 
-				break;
-			case 6 : 
-				if (levels == 3)
-					text = Simulator.processor.getMemory().displayDataBytes(isHex);	
+			case 1 : text = Simulator.processor.getMemory().displayDataWords(isHex); break;
 		}
 		resizableTable.setData((String[][])text[0], (String[])text[1]);
 		data.setText((String) text[2]);

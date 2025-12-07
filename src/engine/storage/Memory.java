@@ -96,28 +96,6 @@ public class Memory implements Addressable {
 			setByte(address + i, data[i]);
 	}
 	
-	public Object[] displayDataBytes(boolean hex) {
-		int bits = (int)(Math.ceil(Helpers.log(size, (hex)? 16 : 10)));
-		String[] headers = {"Address", "Byte"}; 
-		
-		int length = 0;
-		for (Map.Entry<Integer, Byte> entry : memory.entrySet())
-			if (entry.getValue() != 0)
-				length++;
-		
-		String[][] data = new String[length][2];
-		int i = 0;
-		for (Map.Entry<Integer, Byte> entry : memory.entrySet()) {
-			if (entry.getValue() == 0)
-				continue;
-			data[i][0] = String.format((hex)? "0x%0" + bits + "X" : "%d", entry.getKey());
-			data[i][1] = String.format((hex)? "0x%02X" : "%d", entry.getValue());
-			i++;
-		}
-		String accesses = String.format("%-20s : %d\n%-20s : %d", "Instruction accesses", instructionAccesses, "Data accesses", dataAccesses);
-		return new Object[]{data, headers, accesses};
-	}
-	
 	public Object[] displayDataWords(boolean hex) {
 		int bits = (int)(Math.ceil(Helpers.log(size, (hex)? 16 : 10)));
 		String[] headers = {"Address", "Word"}; 
@@ -130,7 +108,7 @@ public class Memory implements Addressable {
 		String[][] data = new String[length][2];
 		int i = 0;
 		for (int address : memory.keySet()){
-			if (address % 2 == 1 || getWord(address) == 0)
+			if (address % 2 == 1)
 				continue;
 			data[i][0] = String.format((hex)? "0x%0" + bits + "X" : "%d", address);
 			data[i][1] = String.format((hex)? "0x%04X" : "%d", getWord(address));

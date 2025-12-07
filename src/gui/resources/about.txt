@@ -1,6 +1,5 @@
-Created By
-Bishoy Bassem Morris
-github.com/bishoybassem
-Updated By
-Kaelin Wang Hu
-github.com/kaelinwanghu
+Original: https://github.com/bishoybassem/architectural-simulator
+Forked and Updated By:
+Kaelin Wang Hu (wanghuk@rose-hulman.edu)
+
+Accessible Graphical RISC-16 Simulator

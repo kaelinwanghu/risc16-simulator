@@ -324,6 +324,8 @@ public final class Assembler
 				return Integer.parseInt(number);
 			if (number.matches("0[xX][\\da-fA-F]+"))
 				return Integer.parseInt(number.substring(2), 16);
+			if (number.matches("0[0-7]+"))
+				return Integer.parseInt(number.substring(1), 8);
 		}
 		catch (Exception e)
 		{
@@ -340,6 +342,8 @@ public final class Assembler
 				return Integer.parseInt(number);
 			if (number.matches("0[xX][\\da-fA-F]+"))
 				return Integer.parseInt(number.substring(2), 16);
+			if (number.matches("0[0-7]+"))
+				return Integer.parseInt(number.substring(1), 8);
 		}
 		catch (Exception e)
 		{
@@ -356,6 +360,8 @@ public final class Assembler
 				return Short.parseShort(number);
 			if (number.matches("0[xX][\\da-fA-F]+"))
 				return Short.parseShort(number.substring(2), 16);
+			if (number.matches("0[0-7]+"))
+				return Short.parseShort(number.substring(1), 8);
 		}
 		catch (Exception e)
 		{
