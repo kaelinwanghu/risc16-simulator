@@ -20,14 +20,14 @@ public class Processor {
 	public Processor(int[][] cacheConfig, int[][] unitsConfig) {
 		configureStorage(cacheConfig);
 		unitSet = new UnitSet(unitsConfig);
-		registerFile = new RegisterFile(memory.getInstructionsStartAddress());
+		registerFile = new RegisterFile(0);
 	}
 	
 	public void configureStorage(int[][] config) {
 		if (config.length < 3)
 			throw new IllegalArgumentException("Invalid configuration");
 		
-		memory = new Memory(config[0][0], config[0][1], config[0][2], config[0][3]);
+		memory = new Memory(config[0][0], config[0][3]);
 		instructionCache = new InstructionCache(config[1][0], config[1][1], config[1][2], config[1][3], memory);
 		Addressable prev = memory;
 		dataCache = new DataCache[config.length - 2];
@@ -58,13 +58,7 @@ public class Processor {
 				registerFile.setPc(oldPc);
 				throw new IllegalArgumentException(ex.getCause().getMessage());
 			}
-			
-			if (!memory.isInstructionAddress(registerFile.getPc())) {
-				String message = "Invalid instruction address (" + registerFile.getPc()  + ")";
-				registerFile.setPc(oldPc);
-				throw new IllegalArgumentException(message);
-			}
-			
+						
 			instruction.setFunction((FunctionType)data[0]);
 			instruction.setDestination((Integer)data[1]);
 			instruction.setEffectiveAddress((Integer)data[2]);
@@ -114,7 +108,7 @@ public class Processor {
 	}
 	
 	public void clear() {
-		registerFile.clear(memory.getInstructionsStartAddress());
+		registerFile.clear(0);
 		unitSet.clear();
 		memory.clear();
 		instructionCache.clear();

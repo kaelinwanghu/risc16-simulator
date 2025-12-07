@@ -14,7 +14,7 @@ public final class Assembler {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static void assemble(String data, String program, Processor processor) {
+	public static void assemble(String program, Processor processor) {
 		String noInstructionsString = "Please enter one or more instructions";
 		if (program.trim().isEmpty()) {
 			throw new IllegalArgumentException(noInstructionsString);
@@ -24,7 +24,6 @@ public final class Assembler {
 		processor.clear();
 		tags.clear();
 		instructionAddress = 0;
-
 		
 		String[] lines = program.toLowerCase().trim().split("\\n+");
 		boolean hasInstruction = false;
@@ -47,18 +46,7 @@ public final class Assembler {
 		for (Map.Entry<String, Integer> entry : tags.entrySet()) {
 			System.out.println(entry.getKey() + ":" + entry.getValue().toString());
 		}
-	
-		if (data.trim().isEmpty())
-			return;
-			
-		lines = data.trim().split("\\n+");
-		for (String line : lines) {
-			String cleanLine = removeComment(line).trim();
-			if (!cleanLine.isEmpty()) {
-				parseData(cleanLine, processor);
-			}
-		}
-
+				
 	}
 
 	/**
@@ -102,6 +90,7 @@ public final class Assembler {
 		int labelLength = label.length();
 		for (int i = 0; i < labelLength; ++i) {
 			char c = label.charAt(i);
+			// alphanumeric or . or _ check
 			if ((c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && (c != '.') && (c != '_')) {
 				return false;
 			}
@@ -180,21 +169,6 @@ public final class Assembler {
 		processor.getMemory().addInstruction(operation, parameters);
 	}
 	
-	private static void parseData(String data, Processor processor) {
-		String[] operands = data.split("\\s+");
-		if (operands.length != 2) {
-			throw new IllegalArgumentException(data + " is an invalid data format");
-		}
-		
-		int address = parseInteger(operands[0]);
-		
-		if (!processor.getMemory().isWordAddress(address)) {
-			throw new IllegalArgumentException("Invalid word address (" + address + ")");
-		}
-		
-		processor.getMemory().setWord(address, parseShort(operands[1]));
-	}
-
 	public static int parseInteger(String number) {
 		try {
 			if (number.matches("-?\\d+")) 
@@ -219,7 +193,6 @@ public final class Assembler {
 		return null;
 	}
 
-	
 	public static short parseShort(String number) {
 		try {
 			if (number.matches("-?\\d+")) 

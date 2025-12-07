@@ -11,38 +11,28 @@ import engine.types.Instruction;
 public class Memory implements Addressable {
 	
 	private final int size;
-	private final int instructionsStartAddress;
-	private final int dataStartAddress;
 	private int instructionAccesses;
 	private int dataAccesses;
 	private int accessTime;
 	private TreeMap<Integer, Byte> memory;
 	private ArrayList<Instruction> instructions;
 	
-	public Memory(int size, int instructionsStartAddress, int dataStartAddress, int accessTime) {
+	public Memory(int size, int accessTime) {
 		if (size < 128 || size > 4194304)
 			throw new IllegalArgumentException("Memory size must be greater than 128B and less than 4MB");
 		
 		if (!Helpers.isPowerOf2(size))
 			throw new IllegalArgumentException("Memory size (" + size + ") must be a power of 2");
-		
-		if (instructionsStartAddress < dataStartAddress && dataStartAddress < size 
-				&& instructionsStartAddress % 2 == 0 && dataStartAddress % 2 == 0) {
-			this.instructionsStartAddress = instructionsStartAddress;
-			this.dataStartAddress = dataStartAddress;
-			this.size = size;
-			this.accessTime = accessTime;
-		} else 
-			throw new IllegalArgumentException("Invalid memory configuration");
+		this.size = size;
+		this.accessTime = accessTime;
 		
 		clear();
 	}
 
 	public void addInstruction(String operation, Object[] operands) {
-		int address = instructionsStartAddress + instructions.size() * 2;
-		if (address >= dataStartAddress)
-			throw new IllegalArgumentException("No enough space for the instructions");
-		
+		int address = instructions.size() * 2;
+		if (address >= size)
+			throw new IllegalArgumentException("Program too large for memory");
 		instructions.add(new Instruction(address, operation, operands));
 	}
 	
@@ -54,7 +44,7 @@ public class Memory implements Addressable {
 		Instruction[] ins = new Instruction[number];
 		int index;
 		for (int i = 0; i < number; i++) {
-			index = (address - instructionsStartAddress) / 2 + i;
+			index = address / 2 + i;
 			ins[i] = (index < 0 || index >= instructions.size())? null : instructions.get(index);
 		}
 		return ins;
@@ -72,7 +62,7 @@ public class Memory implements Addressable {
 			throw new IllegalArgumentException("Invalid address (" + address + ")");
 		
 		Byte data = memory.get(address);
-		return (data == null)? 0 : data;
+		return (data == null) ? 0 : data;
 	}
 	
 	public void setWord(int address, short data) {
@@ -172,25 +162,9 @@ public class Memory implements Addressable {
 	public int getSize() {
 		return size;
 	}
-	
-	public int getInstructionsStartAddress() {
-		return instructionsStartAddress;
-	}
-	
+
 	public int getLastInstructionAddress() {
-		return instructionsStartAddress + instructions.size() * 2 - 2;
-	}
-	
-	public int getDataStartAddress() {
-		return dataStartAddress;
-	}
-	
-	public boolean isInstructionAddress(int address) {
-		return address % 2 == 0 && address >= instructionsStartAddress && address <= getLastInstructionAddress() + 2;
-	}
-	
-	public boolean isWordAddress(int address) {
-		return address % 2 == 0 && address >= dataStartAddress && address < size;
+		return instructions.size() * 2 - 2;
 	}
 
 }

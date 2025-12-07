@@ -6,7 +6,6 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
 import javax.swing.BorderFactory;
@@ -85,7 +84,7 @@ public class Simulator extends JFrame {
 		scheduleDialog = new ScheduleDialog(this);
 		instructionSetDialog = new InstructionSetDialog(this);
 		
-		inputPanel = new InputPanel(this, 5, 20, 35);
+		inputPanel = new InputPanel(this, 25, 35);
 		storageViewer = new StorageViewer(this);
 		storageViewer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		
@@ -201,7 +200,7 @@ public class Simulator extends JFrame {
 	
 	private void assemble() {
 		try {
-			Assembler.assemble(inputPanel.getInput(), inputPanel.getProgram(), processor);
+			Assembler.assemble(inputPanel.getProgram(), processor);
 			storageViewer.refresh();
 			execute.setEnabled(true);
 			executeStep.setEnabled(true);

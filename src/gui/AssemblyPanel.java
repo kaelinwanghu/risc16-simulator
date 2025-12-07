@@ -35,7 +35,7 @@ public class AssemblyPanel extends JPanel {
 		resizableTable = new ResizableTable(text, new String[] {"Address", "Instruction"}, new int[]{35, 0}) {
 			public Component prepareRenderer(TableCellRenderer renderer, int rowIndex, int vColIndex) {
 				Component c = super.prepareRenderer(renderer, rowIndex, vColIndex);
-				int i = (Simulator.processor.getRegisterFile().getPc() - Simulator.processor.getMemory().getInstructionsStartAddress()) / 2;
+				int i = Simulator.processor.getRegisterFile().getPc() / 2;
 				c.setBackground((rowIndex == i)? new Color(255, 255, 153) : getBackground());
 				return c;
 			}
