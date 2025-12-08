@@ -1,14 +1,17 @@
 package engine.types;
+import engine.RegisterFile;
 
 public class Register {
 
 	private int number;
 	private short value;
 	private boolean writable;
+	private RegisterFile parent;
 	
-	public Register(int number, boolean writable) {
+	public Register(int number, boolean writable, RegisterFile parent) {
 		this.number = number;
 		this.writable = writable;
+		this.parent = parent;
 	}
 
 	public int getNumber() {
@@ -25,12 +28,18 @@ public class Register {
 	
 	public void setValue(short value) {
 		if (number == 0) {
+			if (parent != null) {
+				parent.markRegisterChanged(0);
+			}
 			return;
 		}
 		if (!writable) {
 			throw new IllegalArgumentException("Can not write to R" + number);
 		}
 		this.value = value;
+		if (parent != null) {
+			parent.markRegisterChanged(number);
+		}
 	}
 	
 	public void clear() {

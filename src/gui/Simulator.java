@@ -250,6 +250,8 @@ public class Simulator extends JFrame {
 	
 	private void execute(boolean stepped) {
 		try {
+			processor.getRegisterFile().clearChanges();
+        	processor.getMemory().clearChanges();
 			boolean finished = processor.execute(stepped);
 			storageViewer.refresh();
 			assemblyPanel.repaint();

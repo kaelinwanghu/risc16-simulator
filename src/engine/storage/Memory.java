@@ -1,8 +1,11 @@
 package engine.storage;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.HashSet;
 
 import engine.Helpers;
 import engine.types.Addressable;
@@ -16,6 +19,8 @@ public class Memory implements Addressable {
 	private int accessTime;
 	private TreeMap<Integer, Byte> memory;
 	private ArrayList<Instruction> instructions;
+	private HashSet<Integer> changedAddresses;
+	private HashSet<Integer> explicitlySetAddresses;
 	
 	public Memory(int size, int accessTime) {
 		if (size < 128 || size > 4194304)
@@ -25,6 +30,8 @@ public class Memory implements Addressable {
 			throw new IllegalArgumentException("Memory size (" + size + ") must be a power of 2");
 		this.size = size;
 		this.accessTime = accessTime;
+		this.changedAddresses = new HashSet<>();
+		this.explicitlySetAddresses = new HashSet<>(); 
 		
 		clear();
 	}
@@ -72,6 +79,9 @@ public class Memory implements Addressable {
 		byte[] bytes = Helpers.toBytes(data);
 		setByte(address, bytes[0]);
 		setByte(address + 1, bytes[1]);
+
+		changedAddresses.add(address);
+		explicitlySetAddresses.add(address);
 	}
 	
 	public short getWord(int address) {
@@ -94,22 +104,48 @@ public class Memory implements Addressable {
 		dataAccesses++;
 		for (int i = 0; i < data.length; i++)
 			setByte(address + i, data[i]);
+		
+        if (address % 2 == 0 && data.length >= 2)
+        {
+            explicitlySetAddresses.add(address);
+            changedAddresses.add(address);
+		}
 	}
 	
 	public Object[] displayDataWords(boolean hex) {
 		int bits = (int)(Math.ceil(Helpers.log(size, (hex)? 16 : 10)));
 		String[] headers = {"Address", "Word"}; 
 		
-		int length = 0;
-		for (int a : memory.keySet())
-			if (a % 2 == 0 && getWord(a) != 0)
-				length++;
-		
-		String[][] data = new String[length][2];
+    	ArrayList<Integer> validAddresses = new ArrayList<>();
+    
+        for (int address : explicitlySetAddresses)
+        {
+            if (address % 2 == 0)
+            {
+                validAddresses.add(address);
+            }
+        }
+        
+        // Also show any non-zero addresses not already in the list
+        for (int address : memory.keySet())
+        {
+            if (address % 2 == 0 && !explicitlySetAddresses.contains(address))
+            {
+                short value = getWord(address);
+                if (value != 0)
+                {
+                    validAddresses.add(address);
+                }
+            }
+        }
+        
+        // Remove duplicates and sort
+        TreeSet<Integer> sortedAddresses = new TreeSet<>(validAddresses);
+
+		String[][] data = new String[sortedAddresses.size()][2];
 		int i = 0;
-		for (int address : memory.keySet()){
-			if (address % 2 == 1)
-				continue;
+		for (int address : sortedAddresses)
+		{
 			data[i][0] = String.format((hex)? "0x%0" + bits + "X" : "%d", address);
 			data[i][1] = String.format((hex)? "0x%04X" : "%d", getWord(address));
 			i++;
@@ -123,6 +159,8 @@ public class Memory implements Addressable {
 		dataAccesses = 0;
 		memory = new TreeMap<>();
 		instructions = new ArrayList<>();
+		changedAddresses = new HashSet<>();
+		explicitlySetAddresses = new HashSet<>();
 	}
 	
 	public int getDataAccesses() {
@@ -145,4 +183,18 @@ public class Memory implements Addressable {
 		return instructions.size() * 2 - 2;
 	}
 
+	public void markChanged(int address)
+	{
+		changedAddresses.add(address);
+	}
+
+	public boolean hasChanged(int address)
+    {
+        return changedAddresses.contains(address);
+    }
+
+	public void clearChanges()
+    {
+        changedAddresses.clear();
+    }
 }

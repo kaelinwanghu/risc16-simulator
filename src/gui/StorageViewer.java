@@ -12,8 +12,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -25,6 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.border.LineBorder;
+import javax.swing.table.TableCellRenderer;
 
 @SuppressWarnings("serial")
 public class StorageViewer extends JPanel {
@@ -34,15 +37,90 @@ public class StorageViewer extends JPanel {
 	private JComboBox<String> type;
 	private ResizableTable resizableTable;
 	private StorageSettingsDialog storageSettings;
+
+	private HashSet<Integer> changedItems;
+	private boolean r0AttemptedWrite;
 	
 	public StorageViewer(final Simulator simulator) {
 		super(new BorderLayout(0, 10));
 		
 		storageSettings = new StorageSettingsDialog(simulator);
+		changedItems = new HashSet<>();
+		r0AttemptedWrite = false;
 		
-		resizableTable = new ResizableTable(new int[]{20, 10, 0, 0});
+		resizableTable = new ResizableTable(new int[]{20, 10, 0, 0})
+		{
+			@Override
+			public Component prepareRenderer(TableCellRenderer renderer, int rowIndex, int vColIndex)
+			{
+				Component c = super.prepareRenderer(renderer, rowIndex, vColIndex);
+				
+				// Default appearance
+				c.setBackground(Color.WHITE);
+				c.setFont(c.getFont().deriveFont(Font.PLAIN));
+				
+				boolean shouldHighlight = false;
+				Color highlightColor = new Color(200, 255, 200);
+				
+				// Check if this row should be highlighted
+				if (type.getSelectedIndex() == 0)
+				{
+					// Registers view
+					if (rowIndex == 0 && r0AttemptedWrite)
+					{
+						shouldHighlight = true;
+						highlightColor = new Color(255, 255, 150);
+					}
+					else if (changedItems.contains(rowIndex))
+					{
+						shouldHighlight = true;
+						highlightColor = new Color(200, 255, 200);
+					}
+				}
+				else if (type.getSelectedIndex() == 1)
+				{
+					// Memory view
+					try
+					{
+						String addrStr = (String) getValueAt(rowIndex, 0);
+						int address = parseAddressString(addrStr);
+						
+						if (Simulator.processor.getMemory().hasChanged(address))
+						{
+							shouldHighlight = true;
+							highlightColor = new Color(200, 255, 200);
+						}
+					}
+					catch (Exception e)
+					{
+						// Ignore
+					}
+				}
+				
+				// Apply highlighting with padding
+				if (c instanceof JLabel)
+				{
+					JLabel label = (JLabel) c;
+					if (shouldHighlight)
+					{
+						label.setBackground(highlightColor);
+						label.setFont(label.getFont().deriveFont(Font.BOLD));
+						label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+						label.setOpaque(true);
+					}
+					else
+					{
+						label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+						label.setOpaque(false);
+					}
+				}
+				
+				return c;
+			}
+		};
+
 		resizableTable.setRowHeight(20);
-		resizableTable.setIntercellSpacing(new Dimension(10, 0));
+		resizableTable.setIntercellSpacing(new Dimension(0, 1));  // No horizontal gap, small vertical
 
 		JScrollPane scrollPane = new JScrollPane(resizableTable); 
 		scrollPane.setBorder(new LineBorder(Color.GRAY, 1));
@@ -81,13 +159,7 @@ public class StorageViewer extends JPanel {
 		
 		JButton settings = new JButton("Settings");
 		settings.setFocusable(false);
-		settings.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
-				storageSettings.setVisible(true);
-			}
-
-		});
+		settings.addActionListener(e -> storageSettings.setVisible(true));
 		
 		JPanel p1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		p1.add(settings);
@@ -116,10 +188,32 @@ public class StorageViewer extends JPanel {
 	public void refresh() {
 		Object[] text = null;
 		boolean isHex = hex.getText().equals("HEX");
-		int levels = type.getItemCount() - 4;
-		switch(type.getSelectedIndex()) {
-			case 0 : text = Simulator.processor.getRegisterFile().displayRegisters(isHex); break;
-			case 1 : text = Simulator.processor.getMemory().displayDataWords(isHex); break;
+		switch (type.getSelectedIndex()) {
+			case 0 :
+				text = Simulator.processor.getRegisterFile().displayRegisters(isHex);
+                // Extract change tracking info
+                if (text.length >= 5)
+                {
+					try
+					{
+						@SuppressWarnings("unchecked")
+						HashSet<Integer> changes = (HashSet<Integer>) text[3];
+						changedItems = changes;
+						r0AttemptedWrite = (Boolean) text[4];
+					}
+					catch (Exception e)
+					{
+						// Fallback if casting fails
+						changedItems = new HashSet<>();
+						r0AttemptedWrite = false;
+						e.printStackTrace();  // For debugging
+					}                }
+                break;
+			case 1 :
+				text = Simulator.processor.getMemory().displayDataWords(isHex);
+                changedItems = new HashSet<>();  // Not used for memory
+                r0AttemptedWrite = false;
+                break;
 		}
 		resizableTable.setData((String[][])text[0], (String[])text[1]);
 		data.setText((String) text[2]);
@@ -136,8 +230,20 @@ public class StorageViewer extends JPanel {
 		type.setModel(new DefaultComboBoxModel<String>(types.toArray(new String[0])));
 	}
 	
-	public Dimension getPreferredSize() {
+	public Dimension getPreferredSize()
+	{
 		return new Dimension(500, super.getPreferredSize().height);
 	}
 	
+	    private int parseAddressString(String addrStr)
+    {
+        if (addrStr.startsWith("0x") || addrStr.startsWith("0X"))
+        {
+            return Integer.parseInt(addrStr.substring(2), 16);
+        }
+        else
+        {
+            return Integer.parseInt(addrStr);
+        }
+	}
 }
