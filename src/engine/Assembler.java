@@ -461,7 +461,7 @@ public final class Assembler
 					if (operation.equals("beq"))
 					{
 						// For beq, calculate offset from next instruction
-						int offset = (targetAddress - currentAddress - 2) / 2;
+						int offset = (targetAddress - currentAddress - 2);
 						
 						if (offset < -64 || offset > 63)
 						{
@@ -473,23 +473,18 @@ public final class Assembler
 					}
 					else if (operation.equals("lw") || operation.equals("sw"))
 					{
-						int offset = (targetAddress - currentAddress) / 2;
+						int offset = (targetAddress - currentAddress);
 						if (offset < -64 || offset > 63)
 						{
 							throw new IllegalArgumentException("Load/store offset out of range for label '" + label + "' (offset: " + offset + ")");
 						}
-						// For lw/sw, use absolute address
-						operands[j] = targetAddress;
+						operands[j] = offset;
 						continue;
 					}
-					int offset = targetAddress - currentAddress - 2;
-					
-					if (offset < -64 || offset > 63)
+					else
 					{
-						throw new IllegalArgumentException("Branch offset out of range for label '" + label + "' (offset: " + offset + ")");
+						throw new IllegalArgumentException("Unexpected label operand in instruction: " + operation);
 					}
-					
-					operands[j] = offset;
 				}
 			}
 		}
