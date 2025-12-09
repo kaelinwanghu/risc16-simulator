@@ -59,12 +59,6 @@ public final class Assembler
 		
 		// Second pass: resolve all symbolic labels
 		resolveSymbolicLabels(processor);
-		
-		// Debug output
-		for (Map.Entry<String, Integer> entry : tags.entrySet())
-		{
-			System.out.println(entry.getKey() + ": " + entry.getValue());
-		}
 	}
 
 	/**
